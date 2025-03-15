@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from './lib/utils'
-import { SendIcon, User2, Bot, Loader2 } from 'lucide-react'
+import { ArrowUp, User2, Bot, Loader2 } from 'lucide-react'
 
 // Define message types
 type MessageType = 'user' | 'assistant'
@@ -16,17 +16,26 @@ function App() {
     {
       id: '1',
       type: 'assistant',
-      content: 'Hello! I\'m your AI assistant. How can I help you today?'
+      content: 'Hi, I\'m Vercel\'s AI assistant. How can I help you today?'
     }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`
+    }
+  }, [input])
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,62 +77,82 @@ function App() {
     }, 1500)
   }
 
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e)
+    }
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-secondary-950 text-secondary-50">
+    <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       {/* Header */}
-      <header className="border-b border-secondary-800 p-4">
-        <div className="container mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-white">AI Chat</h1>
+      <header className="border-b border-neutral-800 py-4 px-6">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-            <span className="text-sm text-secondary-300">Online</span>
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+              <Bot size={18} className="text-black" />
+            </div>
+            <h1 className="text-sm font-medium">Vercel AI Assistant</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-800 text-neutral-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+              Online
+            </span>
           </div>
         </div>
       </header>
       
       {/* Chat container */}
-      <div className="flex-1 overflow-y-auto p-4 container mx-auto max-w-4xl">
-        <div className="space-y-4 pb-20">
+      <div className="flex-1 overflow-y-auto py-6 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((message) => (
             <div 
               key={message.id}
               className={cn(
-                "flex items-start gap-3 animate-fade-in",
+                "flex group",
                 message.type === 'user' ? "justify-end" : "justify-start"
               )}
             >
-              {message.type === 'assistant' && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
-                  <Bot size={18} className="text-white" />
+              <div className={cn(
+                "flex max-w-[85%] sm:max-w-[75%]",
+                message.type === 'user' ? "flex-row-reverse" : "flex-row",
+              )}>
+                <div className={cn(
+                  "flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center mt-1",
+                  message.type === 'user' ? "ml-3" : "mr-3",
+                  message.type === 'user' ? "bg-neutral-800" : "bg-white"
+                )}>
+                  {message.type === 'user' ? (
+                    <User2 size={16} className="text-white" />
+                  ) : (
+                    <Bot size={16} className="text-black" />
+                  )}
                 </div>
-              )}
-              
-              <div 
-                className={cn(
-                  "rounded-lg px-4 py-2 max-w-[80%]",
+                
+                <div className={cn(
+                  "px-4 py-3 rounded-2xl text-sm",
                   message.type === 'user' 
-                    ? "bg-primary-600 text-white" 
-                    : "bg-secondary-800 text-secondary-100"
-                )}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              </div>
-              
-              {message.type === 'user' && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary-700 flex items-center justify-center">
-                  <User2 size={18} className="text-white" />
+                    ? "bg-neutral-800 text-white" 
+                    : "bg-white text-black"
+                )}>
+                  <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 </div>
-              )}
+              </div>
             </div>
           ))}
           
           {isLoading && (
-            <div className="flex items-start gap-3 animate-fade-in">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
-                <Bot size={18} className="text-white" />
-              </div>
-              <div className="rounded-lg px-4 py-2 bg-secondary-800 text-secondary-100">
-                <Loader2 className="h-5 w-5 animate-spin text-secondary-400" />
+            <div className="flex justify-start">
+              <div className="flex max-w-[85%] sm:max-w-[75%]">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-white flex items-center justify-center mr-3 mt-1">
+                  <Bot size={16} className="text-black" />
+                </div>
+                <div className="px-4 py-3 rounded-2xl bg-white text-black">
+                  <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />
+                </div>
               </div>
             </div>
           )}
@@ -133,29 +162,36 @@ function App() {
       </div>
       
       {/* Input area */}
-      <div className="fixed bottom-0 left-0 right-0 bg-secondary-900 border-t border-secondary-800 p-4">
-        <div className="container mx-auto max-w-4xl">
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <input
-              type="text"
+      <div className="border-t border-neutral-800 py-4 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <form onSubmit={handleSubmit} className="relative">
+            <textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-secondary-800 text-secondary-100 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+              onKeyDown={handleKeyDown}
+              placeholder="Message Vercel AI..."
+              rows={1}
+              className="w-full resize-none bg-neutral-900 rounded-xl border border-neutral-800 px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-700 placeholder:text-neutral-500"
+              style={{ maxHeight: '200px' }}
             />
             <button 
               type="submit" 
               disabled={!input.trim() || isLoading}
               className={cn(
-                "rounded-lg p-2 transition-colors",
+                "absolute right-3 bottom-3 p-1.5 rounded-lg transition-colors",
                 input.trim() && !isLoading
-                  ? "bg-primary-600 text-white hover:bg-primary-700"
-                  : "bg-secondary-800 text-secondary-500 cursor-not-allowed"
+                  ? "bg-white text-black hover:bg-neutral-200"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed"
               )}
             >
-              <SendIcon size={20} />
+              <ArrowUp size={16} />
             </button>
           </form>
+          <div className="mt-2 text-xs text-neutral-500 flex justify-between">
+            <span>Powered by Vercel</span>
+            <span>Press <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400 font-mono text-xs">Enter</kbd> to send</span>
+          </div>
         </div>
       </div>
     </div>
